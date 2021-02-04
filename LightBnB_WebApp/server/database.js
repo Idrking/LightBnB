@@ -111,7 +111,7 @@ const getAllProperties = function(options, limit = 10) {
   let queryString = `
   SELECT properties.*, AVG(property_reviews.rating) as average_rating
   FROM properties
-  JOIN property_reviews ON properties.id = property_id
+  LEFT JOIN property_reviews ON properties.id = property_id
   `;
 
   queryString += adjustQuery((options.city ? `%${options.city}%` : undefined), queryParams, ` city LIKE $${queryParams.length + 1}`);
@@ -149,9 +149,30 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  
+  queryParams = [];
+  queryString = `INSERT INTO properties(`
+  for (keys in property) {
+    queryParams.push(property[keys]);
+    queryString += `${keys}, `;
+  }
+
+  queryString += `active ) VALUES (`;
+  queryParams.push(true);
+  for (let i = 0; i < queryParams.length; i++) {
+    queryString +=` $${i + 1}`;
+    if (i !== queryParams.length - 1) {
+      queryString += `,`
+    }
+  }
+  queryString += `)
+  RETURNING *;`
+  console.log(queryString);
+  return pool.query(queryString, queryParams)
+  .then(res => {
+    console.log(res.rows[0]);
+    return res.rows[0];
+  })
+  .catch(err => console.error('Invalid data provided', err.message));
 }
 exports.addProperty = addProperty;
