@@ -87,6 +87,19 @@ exports.getAllReservations = getAllReservations;
 
 /// Properties
 
+const addAndOrWhere = (paramList) => paramList.length > 0 ? `AND` : `WHERE`;
+
+const adjustQuery = (option, paramList, queryAddition ) => {
+  if (option) {
+    let query = addAndOrWhere(paramList);
+    paramList.push(option);
+    query += queryAddition;
+    return query;
+  }
+  return '';
+}
+
+
 /**
  * Get all properties.
  * @param {{}} options An object containing query options.
@@ -94,12 +107,38 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function(options, limit = 10) {
-  return pool.query(`
-  SELECT *
+  const queryParams = [];
+  let queryString = `
+  SELECT properties.*, AVG(property_reviews.rating) as average_rating
   FROM properties
-  LIMIT $1
-  `, [limit]).then(res => res.rows)
-  .catch(err => { console.error, err.trace});
+  JOIN property_reviews ON properties.id = property_id
+  `;
+
+  queryString += adjustQuery((options.city ? `%${options.city}%` : undefined), queryParams, ` city LIKE $${queryParams.length + 1}`);
+  queryString += adjustQuery(options.owner_id, queryParams, ` owner_id = $${queryParams.length + 1}`);
+  queryString += adjustQuery(options.minimum_price_per_night, queryParams, ` cost_per_night >= $${queryParams.length + 1}`);
+  queryString += adjustQuery(options.maximum_price_per_night, queryParams, ` cost_per_night <= $${queryParams.length + 1}`);
+  
+  queryString += `
+  GROUP BY properties.id
+  `;
+  
+  if (options.minimum_rating) {
+    queryParams.push(options.minimum_rating);
+    queryString += `HAVING AVG(property_reviews.rating) >= $${queryParams.length}`;
+  }
+  
+  queryParams.push(limit);
+  queryString += `
+  ORDER BY cost_per_night
+  LIMIT $${queryParams.length};
+  `;
+
+  console.log(queryString)
+  console.log(queryParams)
+  return pool.query(queryString, queryParams)
+  .then(res => res.rows)
+  .catch(err => console.error('Error retrieving data', err.message));
 }
 exports.getAllProperties = getAllProperties;
 
