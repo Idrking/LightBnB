@@ -10,10 +10,15 @@ $(() => {
     $searchPropertyForm.detach();
     $logInForm.detach();
     $signUpForm.detach();
+    $reserve.detach();
 
     switch (item) {
       case 'listings':
         $propertyListings.appendTo($main);
+        $('.reserveButton').click(function(event) {
+          event.preventDefault();
+          $reserve.appendTo($(this).parent());;
+        })
         break;
       case 'newProperty':
         $newPropertyForm.appendTo($main);
@@ -27,6 +32,9 @@ $(() => {
       case 'signUp':
         $signUpForm.appendTo($main);
         break;
+      // case 'reserve':
+      //   $reserve.appendTo($main);
+        // break;
       case 'error': {
         const $error = $(`<p>${arguments[1]}</p>`);
         $error.appendTo('body');

@@ -72,5 +72,11 @@ module.exports = function(router, database) {
       .catch(e => res.send(e));
   });
 
+  router.post('/reserve', (req, res) => {
+    console.log('We gotta request')
+    console.log(req.body.endDate)
+    res.send('AOK brother');
+  });
+
   return router;
 }
