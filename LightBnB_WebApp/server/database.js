@@ -114,7 +114,7 @@ const getAllProperties = function(options, limit = 10) {
   LEFT JOIN property_reviews ON properties.id = property_id
   `;
 
-  queryString += adjustQuery((options.city ? `%${options.city}%` : undefined), queryParams, ` city LIKE $${queryParams.length + 1}`);
+  queryString += adjustQuery((options.city ? `%${options.city}%` : undefined), queryParams, ` city ILIKE $${queryParams.length + 1}`);
   queryString += adjustQuery(options.owner_id, queryParams, ` owner_id = $${queryParams.length + 1}`);
   queryString += adjustQuery(options.minimum_price_per_night, queryParams, ` cost_per_night >= $${queryParams.length + 1}`);
   queryString += adjustQuery(options.maximum_price_per_night, queryParams, ` cost_per_night <= $${queryParams.length + 1}`);
@@ -134,8 +134,7 @@ const getAllProperties = function(options, limit = 10) {
   LIMIT $${queryParams.length};
   `;
 
-  console.log(queryString)
-  console.log(queryParams)
+ 
   return pool.query(queryString, queryParams)
   .then(res => res.rows)
   .catch(err => console.error('Error retrieving data', err.message));
