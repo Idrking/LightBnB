@@ -18,11 +18,18 @@ $(() => {
     const formData = {
       endDate: $(this).children('#endDate').val(),
       startDate: $(this).children('#startDate').val(),
-      propertyTitle: $(this).parent().parent().children('h3').text()
+      title: $(this).parent().parent().children('h3').text()
     };
     
+    console.log('submitting POST')
     $.post('users/reserve', formData, () => {
-        console.log('POST submitted successfully');
+      propertyListings.clearListings();
+      getAllReservations()
+        .then(function(json) {
+          propertyListings.addProperties(json.reservations, true);
+          views_manager.show('listings');
+        })
+        .catch(error => console.error(error));;
     });
   });
 

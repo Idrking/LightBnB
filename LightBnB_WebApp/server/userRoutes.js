@@ -73,9 +73,22 @@ module.exports = function(router, database) {
   });
 
   router.post('/reserve', (req, res) => {
-    console.log('We gotta request')
-    console.log(req.body.endDate)
-    res.send('AOK brother');
+    if (req.session.userId) {
+      const reservation = {
+        userId: req.session.userId,
+        startDate: req.body.startDate,
+        endDate: req.body.endDate,
+        title: req.body.title
+      }
+
+      database.addReservation(reservation)
+      .then(data => res.send('Reservation successful'))
+      .catch(err => console.err(`There was an issue accessing database:`, err.message));
+    } else {
+      res.status(400).error('You must be logged in to reserve a property');
+    }
+    
+
   });
 
   return router;

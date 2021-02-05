@@ -75,12 +75,14 @@ const getAllReservations = function(guest_id, limit = 10) {
     JOIN properties ON reservations.property_id = properties.id
     JOIN property_reviews ON properties.id = property_reviews.property_id 
     WHERE reservations.guest_id = $1
-    AND reservations.end_date < now()::date
+    AND reservations.end_date > now()::date
     GROUP BY properties.id, reservations.id
     ORDER BY reservations.start_date
     LIMIT $2;
   `, [guest_id, limit])
-  .then(res => res.rows)
+  .then(res => {
+    return res.rows;
+  })
   .catch(err => { console.error, err.trace});
 }
 exports.getAllReservations = getAllReservations;
@@ -175,3 +177,24 @@ const addProperty = function(property) {
   .catch(err => console.error('Invalid data provided', err.message));
 }
 exports.addProperty = addProperty;
+
+
+const addReservation = function(reservation) {
+  queryParams = [reservation.startDate, reservation.endDate, reservation.title, reservation.userId];
+  console.log(reservation);
+  queryString = `
+  INSERT INTO reservations(start_date, end_date, property_id, guest_id)
+  VALUES ($1, $2, (
+    SELECT properties.id
+    FROM properties
+    WHERE title = $3
+  ), $4)
+  RETURNING *;
+  `;
+
+  return pool.query(queryString, queryParams)
+  .then(res => res.rows)
+  .catch(err => console.error('Database returned error:', err.message))
+};
+
+exports.addReservation = addReservation;
